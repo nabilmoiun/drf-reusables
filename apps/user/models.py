@@ -6,22 +6,9 @@ from django.contrib.auth.models import (
     PermissionsMixin,
 )
 
+from apps.common.models import TimeStampedUUIDModel
+
 from apps.user.managers import UserManger
-
-
-class TimeStampedModel(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        abstract = True
-
-
-class TimeStampedUUIDModel(TimeStampedModel):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
-    class Meta:
-        abstract = True
 
 
 class User(AbstractBaseUser, PermissionsMixin, TimeStampedUUIDModel):

@@ -32,6 +32,7 @@ THIRD_PARTY_APPS = [
 
 MAIN_APPS = [
     "apps.user",
+    "apps.authentication",
 ]
 
 INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + MAIN_APPS
