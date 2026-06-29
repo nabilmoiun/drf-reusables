@@ -161,8 +161,8 @@ OTP_EXPIRY_SECONDS = config("OTP_EXPIRY_SECONDS", cast=int, default=300)
 # DRF Spectecular
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Car Inspection API",
-    "DESCRIPTION": "Car Inspection API",
+    "TITLE": "Rest API",
+    "DESCRIPTION": "Rest API",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
