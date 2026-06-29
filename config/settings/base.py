@@ -88,16 +88,13 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
     {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+        "NAME": "apps.common.validators.UpperLowerCasePasswordValidator",
     },
 ]
 
@@ -159,7 +156,7 @@ SIMPLE_JWT = {
 
 # Otp expire seconds
 
-OTP_EXPIRY_SECONDS = config("OTP_EXPIRY_SECONDS", cast=int, default=900)
+OTP_EXPIRY_SECONDS = config("OTP_EXPIRY_SECONDS", cast=int, default=300)
 
 # DRF Spectecular
 
@@ -175,6 +172,7 @@ SPECTACULAR_SETTINGS = {
         "deepLinking": True,
         "filter": True,
         "persistAuthorization": True,
+        "defaultModelsExpandDepth": -1,
     },
     "POSTPROCESSING_HOOKS": [],
 }
@@ -190,3 +188,6 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="defaultfromemail@example.com")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", "defaultfromemail@example.com")
+ACCOUNT_ACTIVATION_TEMPLATE = config("ACCOUNT_ACTIVATION_TEMPLATE", cast=str, default="")
+PASSWORD_RESET_TEMPLATE = config("PASSWORD_RESET_TEMPLATE", cast=str, default="")
+
