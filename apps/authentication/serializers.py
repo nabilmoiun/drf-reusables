@@ -1,12 +1,8 @@
-from django.utils import timezone
 from django.contrib.auth import get_user_model
-from django.contrib.auth.hashers import check_password
 from django.contrib.auth.password_validation import validate_password
 
-from apps.authentication.models import AccountVerificationOTP
-
 from rest_framework import serializers
-
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 User = get_user_model()
 
@@ -29,4 +25,15 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 class AccountActivationSerializer(serializers.Serializer):
     email = serializers.EmailField()
     code = serializers.CharField()
+
+
+class TokenSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        return super().validate(attrs)
+    
+
+class TokenResponseSerializer(serializers.Serializer):
+    access = serializers.CharField()
+    refresh = serializers.CharField()
+
 

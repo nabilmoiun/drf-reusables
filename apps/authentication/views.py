@@ -1,5 +1,4 @@
 from django.db import transaction
-from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 
 from rest_framework import viewsets, status
@@ -13,6 +12,8 @@ from apps.authentication.services import (
     validate_account_activation_otp,
 )
 from apps.authentication.serializers import (
+    TokenSerializer,
+    TokenResponseSerializer,
     UserRegistrationSerializer,
     AccountActivationSerializer,
 )
@@ -26,6 +27,7 @@ class AuthViewSet(viewsets.GenericViewSet):
     serializer_class_map = {
         "registration": UserRegistrationSerializer,
         "account_activation": AccountActivationSerializer,
+        "token": TokenSerializer
     }
 
     def get_serializer_class(self):
@@ -64,3 +66,10 @@ class AuthViewSet(viewsets.GenericViewSet):
         return Response(
             UserRegistrationSerializer(user).data, status=status.HTTP_201_CREATED
         )
+    
+    @extend_schema(responses={201: TokenResponseSerializer})
+    @action(detail=False, methods=["post"], url_path="token")
+    def token(self, *args, **kwargs):
+        serializer = self.get_serializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.validated_data, status=status.HTTP_201_CREATED)
