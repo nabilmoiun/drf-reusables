@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 
 from drf_spectacular.utils import extend_schema
 
@@ -14,6 +15,7 @@ from apps.authentication.services import (
 from apps.authentication.serializers import (
     TokenSerializer,
     TokenResponseSerializer,
+    RefreshTokenSerializer,
     UserRegistrationSerializer,
     AccountActivationSerializer,
 )
@@ -27,7 +29,8 @@ class AuthViewSet(viewsets.GenericViewSet):
     serializer_class_map = {
         "registration": UserRegistrationSerializer,
         "account_activation": AccountActivationSerializer,
-        "token": TokenSerializer
+        "token": TokenSerializer,
+        "refresh": RefreshTokenSerializer
     }
 
     def get_serializer_class(self):
@@ -73,3 +76,15 @@ class AuthViewSet(viewsets.GenericViewSet):
         serializer = self.get_serializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
         return Response(serializer.validated_data, status=status.HTTP_201_CREATED)
+    
+    @extend_schema(request=RefreshTokenSerializer, responses={201: TokenResponseSerializer})
+    @action(detail=False, methods=["post"], url_path="refresh")
+    def refresh(self, *args, **kwargs):
+        serializer = self.get_serializer(data=self.request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except Exception as e:
+            raise ValidationError({"refresh": str(e)})
+        return Response(serializer.validated_data, status=status.HTTP_200_OK)
+
+

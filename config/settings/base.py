@@ -143,6 +143,11 @@ REST_FRAMEWORK = {
 
 # Simple JWT
 SIMPLE_JWT = {
+    "SIGNING_KEY": config(
+        "SIGNING_KEY",
+        cast=str,
+        default="4d7d8b1f0d4c7e7a0dfe2fd2b6a59c95fbd4c07d31d54af53c4cb24fd87dce12",
+    ),
     "ACCESS_TOKEN_LIFETIME": timedelta(
         minutes=config("ACCESS_TOKEN_LIFETIME_MIN", cast=int, default=15)
     ),
@@ -188,6 +193,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="defaultfromemail@example.com")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", "defaultfromemail@example.com")
-ACCOUNT_ACTIVATION_TEMPLATE = config("ACCOUNT_ACTIVATION_TEMPLATE", cast=str, default="")
+ACCOUNT_ACTIVATION_TEMPLATE = config(
+    "ACCOUNT_ACTIVATION_TEMPLATE", cast=str, default=""
+)
 PASSWORD_RESET_TEMPLATE = config("PASSWORD_RESET_TEMPLATE", cast=str, default="")
-
