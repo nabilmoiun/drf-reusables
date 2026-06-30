@@ -12,14 +12,22 @@ from drf_spectacular.utils import extend_schema
 
 from apps.authentication.services import (
     register_user,
+    forget_password,
+    create_password_secret,
+    validate_password_reset_otp,
+    validate_password_reset_secret,
     validate_account_activation_otp,
 )
 from apps.authentication.serializers import (
     TokenSerializer,
-    TokenResponseSerializer,
+    SecretSerializer,
     RefreshTokenSerializer,
+    PasswordResetSerializer,
+    TokenResponseSerializer,
+    ForgetPasswordSerializer,
     UserRegistrationSerializer,
     AccountActivationSerializer,
+    VerifyPasswordResetSerializer,
 )
 
 User = get_user_model()
@@ -33,7 +41,10 @@ class AuthViewSet(viewsets.GenericViewSet):
         "account_activation": AccountActivationSerializer,
         "token": TokenSerializer,
         "refresh": RefreshTokenSerializer,
-        "logout": TokenBlacklistSerializer
+        "logout": TokenBlacklistSerializer,
+        "forget": ForgetPasswordSerializer,
+        "verify_reset": VerifyPasswordResetSerializer,
+        "reset": PasswordResetSerializer
     }
 
     def get_serializer_class(self):
@@ -72,15 +83,17 @@ class AuthViewSet(viewsets.GenericViewSet):
         return Response(
             UserRegistrationSerializer(user).data, status=status.HTTP_201_CREATED
         )
-    
+
     @extend_schema(responses={201: TokenResponseSerializer})
     @action(detail=False, methods=["post"], url_path="token")
     def token(self, *args, **kwargs):
         serializer = self.get_serializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
         return Response(serializer.validated_data, status=status.HTTP_201_CREATED)
-    
-    @extend_schema(request=RefreshTokenSerializer, responses={201: TokenResponseSerializer})
+
+    @extend_schema(
+        request=RefreshTokenSerializer, responses={201: TokenResponseSerializer}
+    )
     @action(detail=False, methods=["post"], url_path="refresh")
     def refresh(self, *args, **kwargs):
         serializer = self.get_serializer(data=self.request.data)
@@ -89,8 +102,6 @@ class AuthViewSet(viewsets.GenericViewSet):
         except Exception as e:
             raise ValidationError({"detail": str(e)})
         return Response(serializer.validated_data, status=status.HTTP_200_OK)
-    
-
 
     @action(detail=False, methods=["post"], url_path="logout")
     def logout(self, *args, **kwargs):
@@ -100,3 +111,53 @@ class AuthViewSet(viewsets.GenericViewSet):
         except Exception as e:
             raise ValidationError({"detail": str(e)})
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False, methods=["post"], url_path="forget")
+    def forget(self, *args, **kwargs):
+        serializer = self.get_serializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+
+        forget_password(serializer=serializer)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @extend_schema(
+        request=VerifyPasswordResetSerializer,
+        responses={201: SecretSerializer},
+    )
+    @transaction.atomic
+    @action(detail=False, methods=["post"], url_path="verify-reset")
+    def verify_reset(self, *args, **kwargs):
+        serializer = self.get_serializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+
+        otp = validate_password_reset_otp(serializer=serializer)
+        password_secret = create_password_secret(user=otp.user)
+
+        otp.used = True
+        otp.save(update_fields=["used"])
+
+        return Response({"secret_key": str(password_secret.id)})
+    
+    @transaction.atomic
+    @action(detail=False, methods=["post"], url_path="reset")
+    def reset(self, *args, **kwargs):
+        serializer = self.get_serializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+
+        secret = validate_password_reset_secret(serializer=serializer)
+
+        user = secret.user
+
+        user.set_password(serializer.validated_data["new_password"])
+        user.save(update_fields=["password"])
+
+        secret.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+
+
+
+
+        

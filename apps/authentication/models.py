@@ -36,11 +36,10 @@ class AccountVerificationOTP(BaseOTPModel):
 
     def verify_code(self, code: str):
         return check_password(password=code, encoded=self.code)
-    
+
     def __str__(self):
         return self.user.email
-    
-    
+
 
 class PasswordResetOTP(BaseOTPModel):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -64,10 +63,10 @@ class PasswordResetOTP(BaseOTPModel):
 
     def __str__(self):
         return self.user.email
-    
+
 
 class PasswordResetSecret(TimeStampedUUIDModel):
-    otp = models.OneToOneField(PasswordResetOTP, on_delete=models.CASCADE)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     expires_at = models.DateTimeField()
 
     class Meta:

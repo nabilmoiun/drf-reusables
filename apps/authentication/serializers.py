@@ -43,3 +43,30 @@ class TokenResponseSerializer(serializers.Serializer):
 class RefreshTokenSerializer(TokenRefreshSerializer):
     def validate(self, attrs):
         return super().validate(attrs)
+    
+
+class ForgetPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        if not User.objects.filter(email=value, is_active=True).exists():
+            raise serializers.ValidationError("No active user with the provided email")
+        return value
+    
+
+class VerifyPasswordResetSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    code = serializers.CharField()
+
+
+class SecretSerializer(serializers.Serializer):
+    secret_key = serializers.CharField()
+
+
+class PasswordResetSerializer(serializers.Serializer):
+    secret_key = serializers.CharField()
+    new_password = serializers.CharField(validators=[validate_password])
+
+
+
+
