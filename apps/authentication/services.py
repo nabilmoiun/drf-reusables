@@ -67,3 +67,27 @@ def register_user(serializer: serializers.ModelSerializer) -> User:
         otp.delete()
 
     return user
+
+
+def validate_account_activation_otp(
+    serializer: serializers.ModelSerializer,
+) -> AccountVerificationOTP:
+
+    qs = AccountVerificationOTP.objects.filter(
+        user__email=serializer.validated_data["email"],
+        used=False,
+        expires_at__gte=timezone.now(),
+    ).select_related("user")
+
+    if not qs.exists():
+        raise serializers.ValidationError(
+            {"detail": ["The otp is invalid or expired"]}
+        )
+
+    otp = qs.first()
+
+    if not otp.verify_code(code=serializer.validated_data["code"]):
+        raise serializers.ValidationError(
+            {"detail": ["The otp is invalid"]}
+        )
+    return otp

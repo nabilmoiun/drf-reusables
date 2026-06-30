@@ -9,7 +9,7 @@ from apps.common.models import TimeStampedUUIDModel
 
 
 class BaseOTPModel(TimeStampedUUIDModel):
-    code = models.CharField(max_length=6)
+    code = models.CharField(max_length=150)
     used = models.BooleanField(default=False)
     expires_at = models.DateTimeField()
 

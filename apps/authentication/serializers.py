@@ -1,5 +1,9 @@
+from django.utils import timezone
 from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import check_password
 from django.contrib.auth.password_validation import validate_password
+
+from apps.authentication.models import AccountVerificationOTP
 
 from rest_framework import serializers
 
@@ -20,3 +24,9 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         if User.objects.filter(email=value, is_active=True).exists():
             raise serializers.ValidationError("A user with the email already exists")
         return value
+    
+
+class AccountActivationSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    code = serializers.CharField()
+
