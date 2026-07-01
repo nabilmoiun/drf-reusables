@@ -33,10 +33,12 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedUUIDModel):
     
     @property
     def full_name(self):
-        f_name = self.first_name
-        l_name = self.last_name
+        f_name = getattr(self, "first_name")
+        l_name = getattr(self, "last_name")
 
         if f_name and l_name:
             return f"{f_name} {l_name}"
         
-        return self.email
+        return getattr(self, str(self.USERNAME_FIELD))
+
+
