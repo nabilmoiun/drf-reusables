@@ -18,6 +18,7 @@ from apps.authentication.services import (
     validate_password_reset_otp,
     validate_password_reset_secret,
     validate_account_activation_otp,
+    resend_account_verification_otp,
 )
 from apps.authentication.serializers import (
     TokenSerializer,
@@ -27,6 +28,7 @@ from apps.authentication.serializers import (
     TokenResponseSerializer,
     ForgetPasswordSerializer,
     ChangePasswordSerializer,
+    ResendOTPToEmailSerializer,
     UserRegistrationSerializer,
     AccountActivationSerializer,
     VerifyPasswordResetSerializer,
@@ -42,6 +44,7 @@ class AuthViewSet(viewsets.GenericViewSet):
         "token": TokenSerializer,
         "reset": PasswordResetSerializer,
         "refresh": RefreshTokenSerializer,
+        "send_otp": ResendOTPToEmailSerializer,
         "logout": TokenBlacklistSerializer,
         "forget": ForgetPasswordSerializer,
         "password": ChangePasswordSerializer,
@@ -183,3 +186,12 @@ class AuthViewSet(viewsets.GenericViewSet):
         user.save(update_fields=["password"])
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    @action(detail=False, methods=["post"], url_path="resend-otp")
+    @transaction.atomic
+    def send_otp(self, *args, **kwargs):
+        serializer = self.get_serializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        resend_account_verification_otp(serializer=serializer)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

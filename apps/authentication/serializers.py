@@ -71,3 +71,13 @@ class PasswordResetSerializer(serializers.Serializer):
 class ChangePasswordSerializer(serializers.Serializer):
     current_password = serializers.CharField()
     new_password = serializers.CharField(validators=[validate_password])
+
+
+class ResendOTPToEmailSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        if not User.objects.filter(email=value, is_active=False).exists():
+            raise serializers.ValidationError("No inactive account found with the provided email")
+        return value
+

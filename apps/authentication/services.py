@@ -179,3 +179,13 @@ def forget_password(serializer: serializers.ModelSerializer) -> None:
     create_password_reset_otp(user=user, code=code)
 
     send_password_reset_otp(user=user, code=code)
+
+
+@transaction.atomic
+def resend_account_verification_otp(serializer: serializers.Serializer) -> AccountVerificationOTP:
+    code = generate_random_otp()
+    user = User.objects.get(email=serializer.validated_data.get("email"))
+    otp = create_account_verification_otp(user=user, code=code)
+    send_account_verification_otp(user=user, code=code)
+    return otp
+
