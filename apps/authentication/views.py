@@ -1,14 +1,15 @@
 from django.db import transaction
 from django.contrib.auth import get_user_model
 
-from rest_framework import viewsets, status
+from drf_spectacular.utils import extend_schema
+
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
+from rest_framework import viewsets, status, permissions
 
 from rest_framework_simplejwt.serializers import TokenBlacklistSerializer
 
-from drf_spectacular.utils import extend_schema
 
 from apps.authentication.services import (
     register_user,
@@ -25,6 +26,7 @@ from apps.authentication.serializers import (
     PasswordResetSerializer,
     TokenResponseSerializer,
     ForgetPasswordSerializer,
+    ChangePasswordSerializer,
     UserRegistrationSerializer,
     AccountActivationSerializer,
     VerifyPasswordResetSerializer,
@@ -37,14 +39,15 @@ User = get_user_model()
 class AuthViewSet(viewsets.GenericViewSet):
     permission_classes = []
     serializer_class_map = {
-        "registration": UserRegistrationSerializer,
-        "account_activation": AccountActivationSerializer,
         "token": TokenSerializer,
+        "reset": PasswordResetSerializer,
         "refresh": RefreshTokenSerializer,
         "logout": TokenBlacklistSerializer,
         "forget": ForgetPasswordSerializer,
+        "password": ChangePasswordSerializer,
+        "registration": UserRegistrationSerializer,
         "verify_reset": VerifyPasswordResetSerializer,
-        "reset": PasswordResetSerializer
+        "account_activation": AccountActivationSerializer,
     }
 
     def get_serializer_class(self):
@@ -138,7 +141,7 @@ class AuthViewSet(viewsets.GenericViewSet):
         otp.save(update_fields=["used"])
 
         return Response({"secret_key": str(password_secret.id)})
-    
+
     @transaction.atomic
     @action(detail=False, methods=["post"], url_path="reset")
     def reset(self, *args, **kwargs):
@@ -155,9 +158,28 @@ class AuthViewSet(viewsets.GenericViewSet):
         secret.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
 
+    @extend_schema(request=ChangePasswordSerializer, responses=None)
+    @transaction.atomic
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="password",
+        permission_classes=[permissions.IsAuthenticated],
+    )
+    def password(self, *args, **kwargs):
+        serializer = self.get_serializer(data=self.request.data)
+        serializer.is_valid(raise_exception=True)
+        user = self.request.user
 
+        if not user.check_password(
+            raw_password=serializer.validated_data["current_password"]
+        ):
+            raise ValidationError(
+                {"password": ["Your provided current password is wrong"]}
+            )
 
+        user.set_password(serializer.validated_data["new_password"])
+        user.save(update_fields=["password"])
 
-        
+        return Response(status=status.HTTP_204_NO_CONTENT)

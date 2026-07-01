@@ -68,5 +68,6 @@ class PasswordResetSerializer(serializers.Serializer):
     new_password = serializers.CharField(validators=[validate_password])
 
 
-
-
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField()
+    new_password = serializers.CharField(validators=[validate_password])

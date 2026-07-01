@@ -10,9 +10,9 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from apps.authentication.models import (
-    AccountVerificationOTP,
     PasswordResetOTP,
     PasswordResetSecret,
+    AccountVerificationOTP,
 )
 
 from core.services.email import send_user_email
