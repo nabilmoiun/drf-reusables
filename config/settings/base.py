@@ -15,6 +15,7 @@ ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="*").split(",")
 # Application definition
 
 DEFAULT_APPS = [
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -70,6 +71,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "config.wsgi.application"
+ASGI_APPLICATION = "config.asgi.application"
 
 
 # Database
@@ -198,3 +200,20 @@ ACCOUNT_ACTIVATION_TEMPLATE = config(
     "ACCOUNT_ACTIVATION_TEMPLATE", cast=str, default=""
 )
 PASSWORD_RESET_TEMPLATE = config("PASSWORD_RESET_TEMPLATE", cast=str, default="")
+
+# Redis
+
+REDIS_HOST = config("REDIS_HOST", cast=str, default="localhost")
+REDIS_PORT = config("REDIS_PORT", cast=int, default=6379)
+
+# Channel
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [(REDIS_HOST, REDIS_PORT)],
+        },
+    },
+}
+

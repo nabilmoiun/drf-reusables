@@ -9,7 +9,6 @@ class Conversation(TimeStampedUUIDModel):
     users = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         related_name="conversations",
-        null=False,
         blank=False,
     )
     last_message_at = models.DateTimeField()
