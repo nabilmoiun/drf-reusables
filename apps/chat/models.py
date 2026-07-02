@@ -6,19 +6,45 @@ from apps.common.models import TimeStampedUUIDModel
 
 
 class Conversation(TimeStampedUUIDModel):
-    users = models.ManyToManyField(
+    """
+    Used for One to One chat between 2 participants
+
+    We shall store user1 and user2 as well for sake of optimizing query performance
+    while creating a conversation for the first time.
+    """
+
+    participants = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         related_name="conversations",
         blank=False,
     )
+    user1 = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="conversations_as_user1",
+        on_delete=models.CASCADE,
+    )
+    user2 = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="conversations_as_user2",
+        on_delete=models.CASCADE,
+    )
     last_message_at = models.DateTimeField()
     blocked_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL
+        settings.AUTH_USER_MODEL,
+        related_name="blocked_conversations",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
     )
 
     class Meta:
         db_table = "conversations"
         verbose_name = "Conversation"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user1", "user2"], name="unique_conversation_pair"
+            )
+        ]
 
     def __str__(self):
         return str(self.id)
@@ -57,4 +83,4 @@ class Messaage(TimeStampedUUIDModel):
         ordering = ["created_at"]
 
     def __str__(self):
-        return self.sender
+        return self.sender.full_name
