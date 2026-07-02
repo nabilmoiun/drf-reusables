@@ -12,11 +12,13 @@ from apps.chat.services.conversation import ConversationService
 
 User = get_user_model()
 
+ROOM_NAME_PREFIX = "chat_"
+
 
 class AuthenticatedGlobalSocketConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         self.user_id = self.scope["user_id"]
-        self.room_name = "chat_%s" % str(self.user_id)
+        self.room_name = f"{ROOM_NAME_PREFIX}{self.user_id}"
         self.handlers = {"chat.message": self.handle_text_message}
         if not self.user_id:
             await self.close()
@@ -53,5 +55,5 @@ class AuthenticatedGlobalSocketConsumer(AsyncJsonWebsocketConsumer):
         else:
             for user_id in (self.user_id, content.get("receiver_id")):
                 await self.channel_layer.group_send(
-                    "chat_%s" % user_id, {"type": "chat.message", "data": response}
+                    f"{ROOM_NAME_PREFIX}{user_id}", {"type": "chat.message", "data": response}
                 )
