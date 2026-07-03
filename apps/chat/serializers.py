@@ -40,5 +40,10 @@ class TextMessagePayloadSerializer(serializers.Serializer):
     sender_id = serializers.CharField()
     receiver_id = serializers.CharField()
     conversation_id = serializers.CharField(required=False)
+    text = serializers.CharField()
+
+
+
+
     
 

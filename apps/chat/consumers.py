@@ -45,15 +45,26 @@ class AuthenticatedGlobalSocketConsumer(AsyncJsonWebsocketConsumer):
         return await self.send_json(event_data["data"])
 
     async def handle_text_message(self, content, **kwargs):
+        response = {}
         content["sender_id"] = self.user_id
-        response = await ChatService.handle_initial_text_message(
-            content=content, **kwargs
-        )
+        conversation_id = content.get("conversation_id")
+
+        # The client will not send conversation id for the first message
+        if not conversation_id:
+            response = await ChatService.handle_initial_text_message(
+                content=content, **kwargs
+            )
+        else:
+            # After the first message, the client will always have the conversation id and send it
+            response = await ChatService.handle_existing_conversation_text_message(
+                content=content
+            )
         if not response.get("success"):
             return await self.send_json(response)
 
         else:
             for user_id in (self.user_id, content.get("receiver_id")):
                 await self.channel_layer.group_send(
-                    f"{ROOM_NAME_PREFIX}{user_id}", {"type": "chat.message", "data": response}
+                    f"{ROOM_NAME_PREFIX}{user_id}",
+                    {"type": "chat.message", "data": response},
                 )

@@ -25,12 +25,11 @@ class ConversationService:
         """
 
         id1, id2 = user1.id, user2.id
-
         if id1 == id2:
             raise ValueError("Can't create a conversation with yourself")
 
         if id1 > id2:
-            id1, id2 = id2, id1
+            user1, user2 = user2, user1
 
         try:
             conversation, created = Conversation.objects.get_or_create(
@@ -43,3 +42,20 @@ class ConversationService:
             return None, str(e)
 
         return conversation, None
+    
+    @classmethod
+    @database_sync_to_async
+    def get_chat_conversation(cls, conversation_id: str, user1: User, user2: User) -> Conversation:
+        id1, id2 = user1.id, user2.id
+        
+        if id1 == id2:
+            raise ValueError("You can't send a message to yourself")
+
+        if id1 > id2:
+            user1, user2 = user2, user1
+
+        converation = Conversation.objects.filter(id=conversation_id, user1=user1, user2=user2).first()
+
+        return converation
+
+
