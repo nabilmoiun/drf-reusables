@@ -16,4 +16,5 @@ urlpatterns = [
         name="swagger-ui",
     ),
     path(api_base, include("apps.authentication.urls")),
+    path(api_base, include("apps.notification.urls")),
 ]
