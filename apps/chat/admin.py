@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from apps.chat.forms import ConversationAdminForm
-from apps.chat.models import Conversation, Attachment, Messaage
+from apps.chat.models import Conversation, Attachment, Message
 
 from apps.common.admin import BaseAdmin
 
@@ -17,6 +17,6 @@ class AttachmentAdmin(BaseAdmin):
     list_display = ["__str__"]
 
 
-@admin.register(Messaage)
+@admin.register(Message)
 class MessageAdmin(BaseAdmin):
     list_display = ["__str__"]

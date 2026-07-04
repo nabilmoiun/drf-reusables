@@ -1,61 +1,112 @@
-from typing import Tuple
-from django.utils import timezone
-from channels.db import database_sync_to_async
-
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError, transaction
+from django.utils import timezone
+
+from channels.db import database_sync_to_async
 
 from apps.chat.models import Conversation
 
 User = get_user_model()
 
 
+class ConversationError(Exception):
+    """Base conversation exception."""
+
+
+class SelfConversationError(ConversationError):
+    """Raised when a user tries to chat with themselves."""
+
+
+class ConversationBlockedError(ConversationError):
+    """Raised when the conversation is blocked."""
+
+
+class ConversationNotFoundError(ConversationError):
+    """Raised when the conversation does not exist."""
+
+
 class ConversationService:
+    """
+    Service responsible for conversation-related business logic.
+    """
+
+    @staticmethod
+    def normalize_users(user1: User, user2: User) -> tuple[User, User]:
+        """
+        Always store the lower PK first.
+        This guarantees uniqueness regardless of who initiates the chat.
+        """
+
+        if user1.pk == user2.pk:
+            raise SelfConversationError(
+                "You cannot start a conversation with yourself."
+            )
+
+        return (user1, user2) if user1.pk < user2.pk else (user2, user1)
+
     @classmethod
     @database_sync_to_async
     def get_or_create_conversation(
-        cls, user1: User, user2: User
-    ) -> Tuple[Conversation | None, str | None]:
-        """
-        There might be situations where user can send message directly without connection request.
-        As a result, we must create a conversation between two users for the first time or initial message.
+        cls,
+        sender: User,
+        receiver: User,
+    ) -> Conversation:
 
-        We are considering user1 always smaller than user2 and they are unique together.
-        So, we can easily filter by user1 and user2 directly without annotating the participants field
-        thus optimizing for large scale.
-        """
-
-        id1, id2 = user1.id, user2.id
-        if id1 == id2:
-            raise ValueError("Can't create a conversation with yourself")
-
-        if id1 > id2:
-            user1, user2 = user2, user1
+        user1, user2 = cls.normalize_users(sender, receiver)
 
         try:
-            conversation, created = Conversation.objects.get_or_create(
-                user1=user1, user2=user2, defaults={"last_message_at": timezone.now()}
+            with transaction.atomic():
+
+                conversation, created = Conversation.objects.get_or_create(
+                    user1=user1,
+                    user2=user2,
+                    defaults={
+                        "last_message_at": timezone.now(),
+                    },
+                )
+
+                if created:
+                    conversation.participants.set([user1, user2])
+
+                return conversation
+
+        except IntegrityError:
+            # Another request created it simultaneously.
+            return Conversation.objects.get(
+                user1=user1,
+                user2=user2,
             )
-            if created:
-                conversation.participants.add(*[user1, user2])
 
-        except Exception as e:
-            return None, str(e)
-
-        return conversation, None
-    
     @classmethod
     @database_sync_to_async
-    def get_chat_conversation(cls, conversation_id: str, user1: User, user2: User) -> Conversation:
-        id1, id2 = user1.id, user2.id
-        
-        if id1 == id2:
-            raise ValueError("You can't send a message to yourself")
+    def get_conversation(
+        cls,
+        conversation_id,
+        sender: User,
+        receiver: User,
+    ) -> Conversation:
 
-        if id1 > id2:
-            user1, user2 = user2, user1
+        user1, user2 = cls.normalize_users(sender, receiver)
 
-        converation = Conversation.objects.filter(id=conversation_id, user1=user1, user2=user2).first()
+        try:
+            conversation = Conversation.objects.get(
+                id=conversation_id,
+                user1=user1,
+                user2=user2,
+            )
+        except Conversation.DoesNotExist:
+            raise ConversationNotFoundError("Conversation does not exist.")
 
-        return converation
+        if conversation.blocked_by:
+            raise ConversationBlockedError("This conversation has been blocked.")
 
+        return conversation
 
+    @classmethod
+    @database_sync_to_async
+    def touch(
+        cls,
+        conversation: Conversation,
+    ):
+        conversation.last_message_at = timezone.now()
+        conversation.save(update_fields=["last_message_at"])

@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 
 from rest_framework import serializers
 
-from apps.chat.models import Conversation, Attachment, Messaage
+from apps.chat.models import Conversation, Attachment, Message
 
 
 User = get_user_model()
@@ -26,18 +26,17 @@ class MessageViewSerializer(serializers.ModelSerializer):
     conversation_id = serializers.UUIDField(source="conversation", read_only=True)
     
     class Meta:
-        model = Messaage
+        model = Message
         exclude = ("conversation",)
         
 
 class CreateMessageSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Messaage
+        model = Message
         exclude = ("user",)
 
 
 class TextMessagePayloadSerializer(serializers.Serializer):
-    sender_id = serializers.CharField()
     receiver_id = serializers.CharField()
     conversation_id = serializers.CharField(required=False)
     text = serializers.CharField()

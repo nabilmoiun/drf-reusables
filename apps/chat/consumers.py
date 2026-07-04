@@ -1,30 +1,33 @@
 import json
+
 from django.core.serializers.json import DjangoJSONEncoder
-
-from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
-
-from django.contrib.auth import get_user_model
 
 from apps.chat.services.chat import ChatService
 from apps.chat.services.websocket import SocketService
-from apps.chat.services.conversation import ConversationService
 
-User = get_user_model()
 
-ROOM_NAME_PREFIX = "chat_"
+ROOM_PREFIX = "chat_"
 
 
 class AuthenticatedGlobalSocketConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
-        self.user_id = self.scope["user_id"]
-        self.room_name = f"{ROOM_NAME_PREFIX}{self.user_id}"
-        self.handlers = {"chat.message": self.handle_text_message}
-        if not self.user_id:
+        self.user = self.scope.get("user")
+
+        if not self.user:
             await self.close()
             return
 
-        await self.channel_layer.group_add(self.room_name, self.channel_name)
+        self.room_group_name = f"{ROOM_PREFIX}{self.user.id}"
+
+        self.handlers = {
+            "chat.message": self.handle_text_message,
+        }
+
+        await self.channel_layer.group_add(
+            self.room_group_name,
+            self.channel_name,
+        )
 
         await self.accept()
 
@@ -34,37 +37,54 @@ class AuthenticatedGlobalSocketConsumer(AsyncJsonWebsocketConsumer):
 
     async def receive_json(self, content, **kwargs):
         event_type = content.get("type")
-        if event_type not in self.handlers.keys():
+
+        handler = self.handlers.get(event_type)
+
+        if not handler:
             response = await SocketService.build_socket_response(
-                success=False, error="Invalid Type"
+                success=False,
+                error="Invalid event type",
+                event_type="chat.error",
             )
             return await self.send_json(response)
-        return await self.handlers[event_type](content=content)
 
-    async def chat_message(self, event_data: dict):
-        return await self.send_json(event_data["data"])
+        return await handler(content)
+
+    async def chat_message(self, event):
+        """
+        Broadcast handler (from channel layer).
+        """
+
+        await self.send_json(event["data"])
 
     async def handle_text_message(self, content, **kwargs):
-        response = {}
-        content["sender_id"] = self.user_id
+        """
+        Entry point for chat messages.
+        """
         conversation_id = content.get("conversation_id")
 
-        # The client will not send conversation id for the first message
         if not conversation_id:
             response = await ChatService.handle_initial_text_message(
-                content=content, **kwargs
+                content=content,
+                sender=self.user,
             )
         else:
-            # After the first message, the client will always have the conversation id and send it
             response = await ChatService.handle_existing_conversation_text_message(
-                content=content
+                content=content,
+                sender=self.user,
             )
+
         if not response.get("success"):
             return await self.send_json(response)
+        
+        receiver_id = content.get("receiver_id")
 
-        else:
-            for user_id in (self.user_id, content.get("receiver_id")):
-                await self.channel_layer.group_send(
-                    f"{ROOM_NAME_PREFIX}{user_id}",
-                    {"type": "chat.message", "data": response},
-                )
+        # broadcast to both participants
+        for user_id in {str(self.user.id), str(receiver_id)}:
+            await self.channel_layer.group_send(
+                f"{ROOM_PREFIX}{user_id}",
+                {
+                    "type": "chat.message",
+                    "data": response,
+                },
+            )

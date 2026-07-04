@@ -61,7 +61,7 @@ class Attachment(TimeStampedUUIDModel):
         return str(self.media.url)
 
 
-class Messaage(TimeStampedUUIDModel):
+class Message(TimeStampedUUIDModel):
     class MessageType(models.TextChoices):
         TEXT = "text", "Text"
         MEDIA = "media", "Media"
