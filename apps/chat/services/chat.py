@@ -1,4 +1,7 @@
-from apps.chat.serializers import TextMessagePayloadSerializer
+from apps.chat.serializers import (
+    TypingIndicatorSerializer,
+    TextMessagePayloadSerializer,
+)
 from apps.chat.services.conversation import (
     ConversationService,
     ConversationError,
@@ -123,3 +126,22 @@ class ChatService:
                 error=str(e),
                 event_type="chat.error",
             )
+
+    @classmethod
+    async def handle_typing_event(self, content: dict):
+        serializer = TypingIndicatorSerializer(data=content)
+
+        if not serializer.is_valid():
+            response = await SocketService.build_socket_response(
+                success=False, error=serializer.errors, event_type="typing.error"
+            )
+            return response
+        sender = content["sender"]
+        response = await SocketService.build_socket_response(
+            success=True,
+            error=None,
+            data={"message": "%s is typing" % str(sender)},
+            event_type="chat.typing",
+        )
+
+        return response

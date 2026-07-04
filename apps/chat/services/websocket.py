@@ -3,7 +3,7 @@ class SocketService:
     async def build_socket_response(
         cls,
         success: bool,
-        error: str,
+        error: str | None,
         data: dict | None = None,
         event_type: str = "chat.message",
     ):

@@ -6,7 +6,6 @@ from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from apps.chat.services.chat import ChatService
 from apps.chat.services.websocket import SocketService
 
-
 ROOM_PREFIX = "chat_"
 
 
@@ -22,6 +21,7 @@ class AuthenticatedGlobalSocketConsumer(AsyncJsonWebsocketConsumer):
 
         self.handlers = {
             "chat.message": self.handle_text_message,
+            "chat.typing": self.handle_typing_indicator,
         }
 
         await self.channel_layer.group_add(
@@ -57,6 +57,9 @@ class AuthenticatedGlobalSocketConsumer(AsyncJsonWebsocketConsumer):
 
         await self.send_json(event["data"])
 
+    async def chat_typing(self, event):
+        await self.send_json(event["data"])
+
     async def handle_text_message(self, content, **kwargs):
         """
         Entry point for chat messages.
@@ -76,7 +79,7 @@ class AuthenticatedGlobalSocketConsumer(AsyncJsonWebsocketConsumer):
 
         if not response.get("success"):
             return await self.send_json(response)
-        
+
         receiver_id = content.get("receiver_id")
 
         # broadcast to both participants
@@ -88,3 +91,15 @@ class AuthenticatedGlobalSocketConsumer(AsyncJsonWebsocketConsumer):
                     "data": response,
                 },
             )
+
+    async def handle_typing_indicator(self, content, **kwargs):
+        content["sender"] = self.user
+        response = await ChatService.handle_typing_event(content=content)
+
+        if not response.get("success"):
+            return await self.send_json(response)
+        
+        await self.channel_layer.group_send(
+            f"{ROOM_PREFIX}{content.get("receiver_id")}",
+            {"type": "chat.typing", "data": response},
+        )

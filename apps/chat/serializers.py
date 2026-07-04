@@ -42,7 +42,7 @@ class TextMessagePayloadSerializer(serializers.Serializer):
     text = serializers.CharField()
 
 
-
-
-    
+class TypingIndicatorSerializer(serializers.Serializer):
+    conversation_id = serializers.CharField()
+    receiver_id = serializers.CharField()
 
