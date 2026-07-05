@@ -1,0 +1,46 @@
+services:
+  daphne:
+    container_name: drf-reusable
+    build: .
+    env_file:
+      - .env
+    entrypoint: "/app/entrypoint.sh"
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: drf-reusable-postgresql
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - drf-reusable-database:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      retries: 5
+    env_file:
+      - .env
+    restart: always
+
+  redis:
+    image: redis:7.0.5-alpine
+    container_name: drf-reusable-redis
+    volumes:
+      - drf-reusable-cache:/drf-cache-data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  drf-reusable-database:
+  drf-reusable-cache:

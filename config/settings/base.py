@@ -84,7 +84,7 @@ DATABASES = {
         "USER": config("DB_USER", cast=str, default="db_user"),
         "PASSWORD": config("DB_PASSWORD", cast=str, default="db_password"),
         "HOST": config("DB_HOST", cast=str, default="localhost"),
-        "PORT": config("DB_PORT", cast=int, default="5432"),
+        "PORT": config("DB_PORT", cast=int, default=5432),
     }
 }
 
