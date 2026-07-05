@@ -50,7 +50,7 @@ class AuthViewSet(viewsets.GenericViewSet):
         "password": ChangePasswordSerializer,
         "registration": UserRegistrationSerializer,
         "verify_reset": VerifyPasswordResetSerializer,
-        "account_activation": AccountActivationSerializer,
+        "activation": AccountActivationSerializer,
     }
 
     def get_serializer_class(self):
@@ -73,8 +73,8 @@ class AuthViewSet(viewsets.GenericViewSet):
         responses={201: UserRegistrationSerializer},
     )
     @transaction.atomic
-    @action(detail=False, methods=["post"], url_path="account-activation")
-    def account_activation(self, *args, **kwargs):
+    @action(detail=False, methods=["post"], url_path="activation")
+    def activation(self, *args, **kwargs):
         serializer = self.get_serializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
 
