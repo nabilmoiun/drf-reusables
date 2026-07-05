@@ -15,6 +15,9 @@ class ConversationViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Conversation.objects.order_by("last_message_at")
     serializer_class_map = {"list": ConversationListSerializer, "messages": MessageViewSerializer}
 
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
     def get_serializer_class(self):
         action = getattr(self, "action", None)
         return self.serializer_class_map.get(action, self.serializer_class)
@@ -36,6 +39,10 @@ class ConversationViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=True, methods=["get"], url_path="messaages")
     def messages(self, *args, **kwargs):
         conversation = self.get_object()
-        qs = conversation.messages.all()
+        queryset = conversation.messages.all()
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
