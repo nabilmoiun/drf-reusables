@@ -51,6 +51,7 @@ class ChatService:
                 sender=sender,
                 text=text,
             )
+            print("calling message service")
 
             data = await MessageService.build_message_response(message)
 

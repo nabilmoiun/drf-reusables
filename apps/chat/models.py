@@ -29,6 +29,9 @@ class Conversation(TimeStampedUUIDModel):
         on_delete=models.CASCADE,
     )
     last_message_at = models.DateTimeField()
+    last_message = models.ForeignKey(
+        "Message", related_name="+", null=True, blank=True, on_delete=models.SET_NULL
+    )
     blocked_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         related_name="blocked_conversations",
@@ -48,6 +51,10 @@ class Conversation(TimeStampedUUIDModel):
 
     def __str__(self):
         return str(self.id)
+
+    def get_other_conversation_user(self, auth_user):
+        user = self.user2 if self.user1 == auth_user else self.user1
+        return user
 
 
 class Attachment(TimeStampedUUIDModel):

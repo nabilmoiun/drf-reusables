@@ -42,7 +42,9 @@ class MessageService:
             )
 
             # keep conversation in sync
-            ConversationService.touch(conversation)
+            conversation.last_message_at = timezone.now()
+            conversation.last_message = message
+            conversation.save(update_fields=["last_message_at", "last_message"])
 
         return message
 

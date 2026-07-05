@@ -4,7 +4,7 @@ from django.utils import timezone
 
 from channels.db import database_sync_to_async
 
-from apps.chat.models import Conversation
+from apps.chat.models import Conversation, Message
 
 User = get_user_model()
 
@@ -104,9 +104,7 @@ class ConversationService:
 
     @classmethod
     @database_sync_to_async
-    def touch(
-        cls,
-        conversation: Conversation,
-    ):
+    def touch(cls, conversation: Conversation, message: Message):
         conversation.last_message_at = timezone.now()
-        conversation.save(update_fields=["last_message_at"])
+        conversation.last_message = message
+        conversation.save(update_fields=["last_message_at", "last_message"])
