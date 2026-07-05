@@ -13,10 +13,10 @@ class ConversationViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = ConversationListSerializer
     queryset = Conversation.objects.order_by("last_message_at")
-    serializer_class_map = {"list": ConversationListSerializer, "messages": MessageViewSerializer}
-
-    def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
+    serializer_class_map = {
+        "messages": MessageViewSerializer,
+        "list": ConversationListSerializer,
+    }
 
     def get_serializer_class(self):
         action = getattr(self, "action", None)
@@ -35,8 +35,8 @@ class ConversationViewSet(viewsets.ReadOnlyModelViewSet):
                 "last_message__attachments",
             )
         )
-    
-    @action(detail=True, methods=["get"], url_path="messaages")
+
+    @action(detail=True, methods=["get"], url_path="messages")
     def messages(self, *args, **kwargs):
         conversation = self.get_object()
         queryset = conversation.messages.all()
