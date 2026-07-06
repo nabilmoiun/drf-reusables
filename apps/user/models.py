@@ -6,12 +6,14 @@ from django.contrib.auth.models import (
     PermissionsMixin,
 )
 
+from apps.rbac.models import Role
 from apps.common.models import TimeStampedUUIDModel
 
 from apps.user.managers import UserManger
 
 
 class User(AbstractBaseUser, PermissionsMixin, TimeStampedUUIDModel):
+    roles = models.ManyToManyField(Role, blank=True)
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)

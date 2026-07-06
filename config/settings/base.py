@@ -34,6 +34,7 @@ THIRD_PARTY_APPS = [
 MAIN_APPS = [
     "apps.user",
     "apps.chat",
+    "apps.rbac",
     "apps.category",
     "apps.notification",
     "apps.authentication",
