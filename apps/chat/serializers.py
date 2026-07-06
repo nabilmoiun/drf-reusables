@@ -69,7 +69,7 @@ class ConversationListSerializer(serializers.ModelSerializer):
         model = Conversation
         exclude = ("participants", "user1", "user2")
 
-    def get_chat_user(self, obj):
+    def get_chat_user(self, obj) -> BaseChatUserSerializer:
         user = self.context["request"].user
         other_user = obj.get_other_conversation_user(user)
         return BaseChatUserSerializer(other_user).data
