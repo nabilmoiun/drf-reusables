@@ -7,8 +7,8 @@ from apps.common.admin import BaseAdmin
 
 @admin.register(Permission)
 class PermissionAdmin(BaseAdmin):
-    list_display = ["__str__"]
-
+     list_display = ["__str__"]
+    
 
 @admin.register(Role)
 class RoleAdmin(BaseAdmin):

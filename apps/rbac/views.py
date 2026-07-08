@@ -4,13 +4,15 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import permissions, viewsets, status
 
-from apps.rbac.models import Role
+from apps.rbac.models import Role, Permission
 from apps.rbac.serializers import (
     RoleListSerializer,
     RoleViewSerializer,
     RoleCreateSerializer,
     RoleUpdateSerializer,
     PermissionViewSerializer,
+    PermissionCreateSerializer,
+    PermissionUpdateSerializer,
 )
 from core.permissions.rbac import required_permission
 
@@ -56,17 +58,17 @@ class RoleViewSet(viewsets.ModelViewSet):
 
         if action in ("list", "retrieve", "permissions"):
             return queryset.filter(user=self.request.user)
-        
+
         return queryset
-    
+
     @required_permission("role.create")
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
-    
+
     @required_permission("role.update")
     def update(self, request, *args, **kwargs):
         return super().update(request, *args, **kwargs)
-    
+
     @required_permission("role.delete")
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
@@ -79,3 +81,42 @@ class RoleViewSet(viewsets.ModelViewSet):
         queryset = role.permissions.order_by("name")
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=["permissions"])
+class PermissionViewSet(viewsets.ModelViewSet):
+    serializer_class = PermissionViewSerializer
+    queryset = Permission.objects.order_by("name")
+    permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ["post", "get", "delete", "put"]
+    serializer_class_map = {
+        "list": PermissionViewSerializer,
+        "destroy": PermissionViewSerializer,
+        "create": PermissionCreateSerializer,
+        "retrieve": PermissionViewSerializer,
+        "update": PermissionUpdateSerializer,
+    }
+
+    def get_serializer_class(self):
+        action = getattr(self, "action")
+        return self.serializer_class_map.get(action, self.serializer_class)
+
+    @required_permission("permission.view")
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @required_permission("permission.create")
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+    
+    @required_permission("permission.view")
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+    
+    @required_permission("permission.update")
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+    
+    @required_permission("permission.delete")
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)

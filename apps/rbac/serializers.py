@@ -3,6 +3,18 @@ from rest_framework import serializers
 from apps.rbac.models import Permission, Role
 
 
+class PermissionCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Permission
+        fields = "__all__"
+
+
+class PermissionUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Permission
+        fields = ("name", "module")
+
+
 class PermissionViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Permission
