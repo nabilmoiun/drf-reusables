@@ -35,6 +35,7 @@ MAIN_APPS = [
     "apps.user",
     "apps.chat",
     "apps.rbac",
+    "apps.common",
     "apps.category",
     "apps.notification",
     "apps.authentication",

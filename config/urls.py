@@ -17,6 +17,7 @@ urlpatterns = [
     ),
     path(api_base, include("apps.chat.urls")),
     path(api_base, include("apps.rbac.urls")),
+    path(api_base, include("apps.common.urls")),
     path(api_base, include("apps.category.urls")),
     path(api_base, include("apps.notification.urls")),
     path(api_base, include("apps.authentication.urls")),
