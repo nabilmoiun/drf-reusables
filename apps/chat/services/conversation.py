@@ -45,7 +45,6 @@ class ConversationService:
         return (user1, user2) if user1.pk < user2.pk else (user2, user1)
 
     @classmethod
-    @database_sync_to_async
     def get_or_create_conversation(
         cls,
         sender: User,
@@ -78,7 +77,6 @@ class ConversationService:
             )
 
     @classmethod
-    @database_sync_to_async
     def get_conversation(
         cls,
         conversation_id,
@@ -108,3 +106,5 @@ class ConversationService:
         conversation.last_message_at = timezone.now()
         conversation.last_message = message
         conversation.save(update_fields=["last_message_at", "last_message"])
+
+    

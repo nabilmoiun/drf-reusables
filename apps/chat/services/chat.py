@@ -1,3 +1,5 @@
+from channels.db import database_sync_to_async
+
 from apps.chat.serializers import (
     TypingIndicatorSerializer,
     TextMessagePayloadSerializer,
@@ -41,17 +43,17 @@ class ChatService:
                     event_type="chat.error",
                 )
 
-            conversation = await ConversationService.get_or_create_conversation(
+            conversation = await database_sync_to_async(
+                ConversationService.get_or_create_conversation
+            )(
                 sender=sender,
                 receiver=receiver,
             )
-
             message = await MessageService.create_text_message(
                 conversation=conversation,
                 sender=sender,
                 text=text,
             )
-            print("calling message service")
 
             data = await MessageService.build_message_response(message)
 
@@ -101,7 +103,9 @@ class ChatService:
                     event_type="chat.error",
                 )
 
-            conversation = await ConversationService.get_conversation(
+            conversation = await database_sync_to_async(
+                ConversationService.get_conversation
+            )(
                 conversation_id=conversation_id,
                 sender=sender,
                 receiver=receiver,
