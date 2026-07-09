@@ -24,6 +24,15 @@ class AttachmentSerializer(serializers.ModelSerializer):
         model = Attachment
         fields = "__all__"
 
+    def validate_media(self, value):
+        max_size_in_mb =5
+        max_size = max_size_in_mb * 1024 * 1024
+        
+        if value.size > max_size:
+            raise serializers.ValidationError("Max size is %s mb" % str(max_size_in_mb))
+        
+        return value
+
 
 class MessageViewSerializer(serializers.ModelSerializer):
 
@@ -91,6 +100,12 @@ class CreateAttachmentMessageSerializer(serializers.Serializer):
 
     def validate_attachments(self, value):
         max_upload_limit = 5
+        
         if len(value) > max_upload_limit:
             return serializers.ValidationError("Max file uploads %s" % max_upload_limit)
+        
+        for file in value:
+            serializer = AttachmentSerializer(data={"media": file})
+            serializer.is_valid(raise_exception=True)
+        
         return value
