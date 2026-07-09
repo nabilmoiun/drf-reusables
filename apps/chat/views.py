@@ -19,6 +19,7 @@ from apps.chat.serializers import (
     CreateAttachmentMessageSerializer,
 )
 
+from apps.chat.services.message import MessageService
 from apps.chat.services.conversation import ConversationService
 
 User = get_user_model()
@@ -99,23 +100,15 @@ class MessageViewSet(viewsets.ModelViewSet):
             )
         )
 
-        attachments = [
-            Attachment(media=file) for file in serializer.validated_data["attachments"]
-        ]
-
-        message = Message.objects.create(
-            text=serializer.validated_data["text"],
+        message = MessageService.create_attachment_message(
             conversation=conversation,
             sender=request.user,
-            type=Message.MessageType.MEDIA,
+            text=serializer.validated_data["text"],
+            attachments=[
+                Attachment(media=file)
+                for file in serializer.validated_data["attachments"]
+            ],
         )
-
-        message.attachments.add(*Attachment.objects.bulk_create(attachments))
-
-        conversation.last_message_at = timezone.now()
-        conversation.last_message = message
-        conversation.save(update_fields=["last_message_at", "last_message"])
-
         response = MessageViewSerializer(message, context={"request": request}).data
 
         channel_layer = get_channel_layer()
