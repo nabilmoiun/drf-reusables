@@ -1,6 +1,6 @@
 class SocketService:
     @classmethod
-    async def build_socket_response(
+    def build_socket_response(
         cls,
         success: bool,
         error: str | None,

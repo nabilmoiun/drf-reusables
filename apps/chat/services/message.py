@@ -23,7 +23,6 @@ class MessageService:
     """
 
     @classmethod
-    @database_sync_to_async
     def create_text_message(
         cls,
         conversation,
@@ -76,6 +75,5 @@ class MessageService:
         return message
 
     @classmethod
-    @database_sync_to_async
     def build_message_response(cls, message: Message) -> dict:
         return MessageViewSerializer(message).data

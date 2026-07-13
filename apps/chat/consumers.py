@@ -1,5 +1,8 @@
 import json
 
+from asgiref.sync import sync_to_async
+from channels.db import database_sync_to_async
+
 from django.core.serializers.json import DjangoJSONEncoder
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
@@ -41,7 +44,7 @@ class AuthenticatedGlobalSocketConsumer(AsyncJsonWebsocketConsumer):
         handler = self.handlers.get(event_type)
 
         if not handler:
-            response = await SocketService.build_socket_response(
+            response = await sync_to_async(SocketService.build_socket_response)(
                 success=False,
                 error="Invalid event type",
                 event_type="chat.error",
@@ -67,12 +70,12 @@ class AuthenticatedGlobalSocketConsumer(AsyncJsonWebsocketConsumer):
         conversation_id = content.get("conversation_id")
 
         if not conversation_id:
-            response = await ChatService.handle_initial_text_message(
+            response = await database_sync_to_async(ChatService.handle_initial_text_message)(
                 content=content,
                 sender=self.user,
             )
         else:
-            response = await ChatService.handle_existing_conversation_text_message(
+            response = await database_sync_to_async(ChatService.handle_existing_conversation_text_message)(
                 content=content,
                 sender=self.user,
             )
@@ -94,7 +97,7 @@ class AuthenticatedGlobalSocketConsumer(AsyncJsonWebsocketConsumer):
 
     async def handle_typing_indicator(self, content, **kwargs):
         content["sender"] = self.user
-        response = await ChatService.handle_typing_event(content=content)
+        response = await sync_to_async(ChatService.handle_typing_event)(content=content)
 
         if not response.get("success"):
             return await self.send_json(response)
