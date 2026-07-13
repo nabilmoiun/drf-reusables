@@ -70,12 +70,16 @@ class AuthenticatedGlobalSocketConsumer(AsyncJsonWebsocketConsumer):
         conversation_id = content.get("conversation_id")
 
         if not conversation_id:
-            response = await database_sync_to_async(ChatService.handle_initial_text_message)(
+            response = await database_sync_to_async(
+                ChatService.handle_initial_text_message
+            )(
                 content=content,
                 sender=self.user,
             )
         else:
-            response = await database_sync_to_async(ChatService.handle_existing_conversation_text_message)(
+            response = await database_sync_to_async(
+                ChatService.handle_existing_conversation_text_message
+            )(
                 content=content,
                 sender=self.user,
             )
@@ -101,7 +105,7 @@ class AuthenticatedGlobalSocketConsumer(AsyncJsonWebsocketConsumer):
 
         if not response.get("success"):
             return await self.send_json(response)
-        
+
         await self.channel_layer.group_send(
             f"{ROOM_PREFIX}{content.get("receiver_id")}",
             {"type": "chat.typing", "data": response},
