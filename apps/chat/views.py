@@ -20,6 +20,7 @@ from apps.chat.serializers import (
 )
 
 from apps.chat.services.message import MessageService
+from apps.chat.services.websocket import SocketService
 from apps.chat.services.conversation import ConversationService
 
 User = get_user_model()
@@ -111,15 +112,13 @@ class MessageViewSet(viewsets.ModelViewSet):
         )
         response = MessageViewSerializer(message, context={"request": request}).data
 
-        channel_layer = get_channel_layer()
-
-        for user_id in (request.user.id, receiver.id):
-            async_to_sync(channel_layer.group_send)(
-                f"{self.ROOM_PREFIX}{user_id}",
-                {
-                    "type": "chat.message",
-                    "data": {"event_type": "chat.message", **response},
-                },
-            )
+        SocketService.broadcast(
+            [
+                f"{self.ROOM_PREFIX}{request.user.id}",
+                f"{self.ROOM_PREFIX}{receiver.id}",
+            ],
+            handler="chat.message",
+            data=response
+        )
 
         return Response(response, status=status.HTTP_201_CREATED)
